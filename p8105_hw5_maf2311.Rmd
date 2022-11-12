@@ -1,12 +1,14 @@
 ---
 title: "p8105_hw5_maf2311"
-author: "Mackenzie Frost"
-date: "November 11 2022"
+author: "Mackenzie Frost (maf2311)"
 output: github_document
 ---
 
+November 11, 2022
+
 ```{r setup, include = FALSE}
 library(tidyverse)
+library(rvest)
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -29,12 +31,24 @@ scale_fill_discrete = scale_fill_viridis_d
 
 # Problem 1
 
-Using data from zipfile, create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:
+A tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:
 
-Start with a dataframe containing all file names; the list.files function will help
+```{r prob1, include = FALSE}
+names = list.files(path = "./data/", pattern = NULL, all.files = FALSE, full.names = FALSE, recursive = FALSE, ignore.case = FALSE, include.dirs = FALSE, no.. = FALSE)
+
+read_in_files = function(x) {
+  df = read_csv(file = paste("./data/", x, sep = "")) %>%  
+  janitor::clean_names()
+}
+
+output = map(names, read_in_files)
+```
+
 Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
+
 Tidy the result; manipulate file names to include control arm and subject ID, make sure weekly observations are “tidy”, and do any other tidying that’s necessary
-Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
+
+### Spaghetti plot showing observations on each subject over time, and comment on differences between groups.
 
 # Problem 2
 
