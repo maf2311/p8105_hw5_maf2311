@@ -84,7 +84,7 @@ homicides = read_csv(file = "./data-homicides-master/homicide-data.csv") %>%
   )
 
 summary = homicides %>%
-  group_by(city) %>%
+  group_by(city_state) %>%
   summarise(
     total_homicides = n(),
     unsolved = sum(disposition == "Closed without arrest" | disposition == "Open/No arrest")
@@ -97,7 +97,7 @@ The raw data includes variables related to the record information, victim inform
 
 ```{r}
 baltimore = summary %>%
-  filter(city == "Baltimore")
+  filter(city_state == "Baltimore, MD")
 
 unsolved_prop_baltimore = prop.test(baltimore$unsolved[1], baltimore$total_homicides[1]) %>%
   broom::tidy()
@@ -109,26 +109,43 @@ Estimate proportion and confidence interval of unsolved homicides in Baltimore, 
 
 `r unsolved_prop_baltimore %>% pull(estimate)`, (`r unsolved_prop_baltimore %>% pull(conf.low)`, `r unsolved_prop_baltimore %>% pull(conf.high)`)
 
-prop.test for each of the cities, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city.
-
 ```{r}
 unsolved_prop = function(x){
 
   values = summary %>%
-  filter(city == x)
+  filter(city_state == x)
 
+unsolved_prop_test = prop.test(values$unsolved[1], values$total_homicides[1]) %>%
+  broom::tidy()
+  
 tibble(
-  proportion = values$city[1],
-  lower = values$unsolved[1],
-  upper = values$total_homicides[1]
+  proportion = unsolved_prop_test %>% pull(estimate),
+  lower = unsolved_prop_test %>% pull(conf.low),
+  upper = unsolved_prop_test %>% pull(conf.high)
 )
 }
 
-final = map(summary %>% pull(city), unsolved_prop)
+summary = 
+  summary %>%
+  mutate(
+    prop_test = map(summary %>% pull(city_state), unsolved_prop)
+  ) %>%
+  unnest(cols = prop_test) %>%
+  arrange(-proportion)
 
+ggplot(summary, aes(x = city_state, y = proportion)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  labs(
+    title = "Proportion of Unsolved Homicides in Major US Cities",
+    x = "City",
+    y = "Proportion of Unsolved Homicides",
+    caption = "Data from the Washington Post"
+  ) +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
 
-plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. 
 
 # Problem 3
 
