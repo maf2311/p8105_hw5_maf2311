@@ -130,10 +130,9 @@ summary =
   mutate(
     prop_test = map(summary %>% pull(city_state), unsolved_prop)
   ) %>%
-  unnest(cols = prop_test) %>%
-  arrange(-proportion)
+  unnest(cols = prop_test)
 
-ggplot(summary, aes(x = city_state, y = proportion)) + 
+ggplot(summary, aes(x = reorder(city_state, -proportion), y = proportion)) + 
   geom_point() +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
   labs(
@@ -144,8 +143,6 @@ ggplot(summary, aes(x = city_state, y = proportion)) +
   ) +
   theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
-
-plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. 
 
 # Problem 3
 
