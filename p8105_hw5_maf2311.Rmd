@@ -148,17 +148,30 @@ ggplot(summary, aes(x = reorder(city_state, -proportion), y = proportion)) +
 
 When designing an experiment or analysis, a common question is whether it is likely that a true effect will be detected – put differently, whether a false null hypothesis will be rejected. The probability that a false null hypothesis is rejected is referred to as power, and it depends on several factors, including: the sample size; the effect size; and the error variance. In this problem, you will conduct a simulation to explore power in a one-sample t-test.
 
-First set the following design elements:
+```{r}
+sim_ttest = function (true_mean){
 
-Fix n=30
-Fix σ=5
-Set μ=0. Generate 5000 datasets from the model
+  sample = rnorm(30, mean = true_mean, sd = 5)
+  test_results = t.test(sample)
+  test_results = test_results %>%
+    broom::tidy()
+  
+  tibble(
+  estimate = test_results %>% pull(estimate),
+  p_val = test_results %>% pull(p.value)
+)
+}
 
-x∼Normal[μ,σ]
-
-For each dataset, save μ̂  and the p-value arising from a test of H:μ=0 using α=0.05. Hint: to obtain the estimate and p-value, use broom::tidy to clean the output of t.test.
-
-Repeat the above for μ={1,2,3,4,5,6}, and complete the following:
+sim_results_df = 
+  expand_grid(
+    true_mean = 1:6,
+    iter = 1:5000
+  ) %>% 
+  mutate(
+    estimate_df = map(true_mean, sim_ttest)
+  ) %>% 
+  unnest(estimate_df)
+```
 
 Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis. Describe the association between effect size and power.
 Make a plot showing the average estimate of μ̂  on the y axis and the true value of μ on the x axis. Make a second plot (or overlay on the first) the average estimate of μ̂  only in samples for which the null was rejected on the y axis and the true value of μ on the x axis. Is the sample average of μ̂  across tests for which the null is rejected approximately equal to the true value of μ? Why or why not?
